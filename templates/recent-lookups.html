@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Recent Lookups</h2>
+<table>
+    <tr>
+        <th>IOC</th><th>Timestamp</th><th>Tag</th><th>Action</th>
+    </tr>
+    {% for threat in threats %}
+    <tr>
+        <td>{{ threat.ioc }}</td>
+        <td>{{ threat.timestamp.strftime('%Y-%m-%d %H:%M:%S') if threat.timestamp else '' }}</td>
+        <td>{{ threat.tag or '' }}</td>
+        <td>
+            <form action="{{ url_for('tag') }}" method="post" style="display:inline;">
+                <input type="hidden" name="ioc" value="{{ threat.ioc }}">
+                <input type="text" name="tag" value="{{ threat.tag or '' }}" placeholder="Tag">
+                <input type="hidden" name="redirect_page" value="recent_lookups">
+                <button type="submit">Update Tag</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

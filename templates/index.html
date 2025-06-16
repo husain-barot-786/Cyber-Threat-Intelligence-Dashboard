@@ -1,0 +1,139 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>Cyber Threat Intelligence Dashboard</h1>
+<form method="post">
+    <input type="text" name="ioc" placeholder="Enter IP or Domain" value="{{ ioc }}">
+    <button type="submit">Check</button>
+</form>
+{% if error %}
+    <div class="error-box">{{ error }}</div>
+{% endif %}
+
+{% macro vt_badge(category, result) -%}
+    {%- if category == "harmless" or result == "clean" %}
+        <span class="badge badge-green">Harmless</span>
+    {%- elif category == "malicious" or result == "malicious" %}
+        <span class="badge badge-red">Malicious</span>
+    {%- elif category == "suspicious" or result == "suspicious" %}
+        <span class="badge badge-red">Suspicious</span>
+    {%- else %}
+        <span class="badge badge-grey">Unrated</span>
+    {%- endif %}
+{%- endmacro %}
+
+{% macro ab_badge(score) -%}
+    {%- if score is not string and score is not none %}
+        {% set score = score|string %}
+    {% endif %}
+    {%- if score == "0" %}
+        <span class="badge badge-green">{{ score }} (Clean)</span>
+    {%- elif score != "N/A" and score != "" and score|int >= 80 %}
+        <span class="badge badge-red">{{ score }} (High Risk)</span>
+    {%- elif score == "N/A" or score == "" %}
+        <span class="badge badge-grey">Unknown</span>
+    {%- else %}
+        <span class="badge badge-grey">{{ score }}</span>
+    {%- endif %}
+{%- endmacro %}
+
+{% if result and result.ioc %}
+    <h2>Lookup Result for {{ result.ioc }}</h2>
+    <div class="four-cols-bar">
+        <div class="four-cols-section">
+            <h4>VirusTotal Summary Table</h4>
+            {% if result.vt_raw_json.error %}
+                <span class="error-text">Error: {{ result.vt_raw_json.error }}</span>
+            {% elif result.vt_last_results %}
+                <div class="vt-summary-scroll">
+                <table class="vt-table">
+                    <tr>
+                        <th>Engine</th>
+                        <th>Result</th>
+                    </tr>
+                    {% for engine, res in result.vt_last_results.items() %}
+                    <tr>
+                        <td>{{ engine }}</td>
+                        <td>
+                            {{ vt_badge(res.category, res.result) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                </div>
+            {% else %}
+                <span class="nodata-text">No data found or not malicious.</span>
+            {% endif %}
+        </div>
+        <div class="four-cols-section">
+            <h4>VirusTotal Raw JSON</h4>
+            <div class="scroll-box">
+                <pre>{{ result.vt_raw_json | tojson(indent=2) }}</pre>
+            </div>
+        </div>
+        <div class="four-cols-section">
+            <h4>AbuseIPDB Report Table</h4>
+            {% if result.ab is defined and result.ab.data is defined and result.ab.data %}
+                {% set ab = result.ab.data if result.ab.data is mapping else (result.ab.data[0] if result.ab.data is sequence and result.ab.data and result.ab.data[0] is mapping else {}) %}
+                {% if ab.get('reports') %}
+                    <div class="report-table-scroll">
+                    <table class="vt-table">
+                        <tr>
+                            <th>Reporter</th>
+                            <th>Category</th>
+                            <th>Comment</th>
+                            <th>Date</th>
+                        </tr>
+                        {% for rep in ab['reports'] %}
+                        <tr>
+                            <td>{{ rep.reporterId }}</td>
+                            <td>
+                                <span class="badge badge-grey">{{ rep.categories|join(', ') }}</span>
+                            </td>
+                            <td>{{ rep.comment or '' }}</td>
+                            <td>{{ rep.reportedAt[:19].replace('T', ' ') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    </div>
+                {% else %}
+                    <span class="nodata-text">No reports found or not malicious.</span>
+                {% endif %}
+            {% elif result.ab is defined and result.ab.error %}
+                <span class="error-text">Error: {{ result.ab.error }}</span>
+            {% else %}
+                <span class="nodata-text">No data found or not malicious.</span>
+            {% endif %}
+        </div>
+        <div class="four-cols-section">
+            <h4>AbuseIPDB Raw JSON</h4>
+            <div class="scroll-box">
+                <pre>
+{{ result.ab.data | tojson(indent=2) if result.ab is defined and result.ab.data is defined and result.ab.data else (result.ab | tojson(indent=2) if result.ab is defined else "{}") }}
+                </pre>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Back-to-Top Button -->
+<button id="back-to-top" aria-label="Scroll to Top">
+  <span class="circle-btn">
+    <svg class="circle-svg" width="60" height="60" viewBox="0 0 60 60">
+      <circle class="circle-main" cx="30" cy="30" r="26" fill="white" stroke="black" stroke-width="4"/>
+      <polyline points="18,34 30,22 42,34" fill="none" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="scroll-text">Scroll to Top</span>
+  </span>
+</button>
+<script>
+window.onscroll = function() {
+    const btn = document.getElementById("back-to-top");
+    if (window.scrollY > 100) btn.style.display = "block";
+    else btn.style.display = "none";
+};
+document.getElementById("back-to-top").onclick = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+document.getElementById("back-to-top").removeAttribute("title");
+</script>
+{% endblock %}

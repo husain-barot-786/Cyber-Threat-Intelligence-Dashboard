@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cyber Threat Intelligence</title>
+    <style>
+        /* Simple back-to-top button style */
+        #back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: none;
+            z-index: 99;
+            font-size: 18px;
+            background: #444;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cyber Threat Intelligence Dashboard</h1>
+    <form method="post">
+        <input type="text" name="ioc" placeholder="Enter IP or Domain" value="{{ ioc }}">
+        <button type="submit">Check</button>
+    </form>
+    {% if error %}
+        <div style="color: red; margin: 10px 0;">{{ error }}</div>
+    {% endif %}
+
+    {% if result %}
+        <h2>Lookup Result for {{ result.ioc }}</h2>
+        <h3>VirusTotal</h3>
+        <div style="background:#eee;padding:10px;">
+            {% if result.vt.error %}
+                <span style="color:red;">Error: {{ result.vt.error }}</span>
+            {% elif result.vt.data is defined and result.vt.data %}
+                <b>Results:</b>
+                <pre>{{ result.vt.data | tojson(indent=2) }}</pre>
+            {% else %}
+                <span style="color:gray;">No data found or not malicious.</span>
+            {% endif %}
+        </div>
+        {% if result.ab %}
+            <h3>AbuseIPDB</h3>
+            <div style="background:#eee;padding:10px;">
+                {% if result.ab.error %}
+                    <span style="color:red;">Error: {{ result.ab.error }}</span>
+                {% elif result.ab.data is defined and result.ab.data %}
+                    <b>Results:</b>
+                    <pre>{{ result.ab.data | tojson(indent=2) }}</pre>
+                {% else %}
+                    <span style="color:gray;">No data found or not malicious.</span>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <h2>Recent Lookups</h2>
+    <table border="1" cellpadding="5" cellspacing="0">
+        <tr>
+            <th>IOC</th><th>Timestamp</th><th>Tag</th><th>Action</th>
+        </tr>
+        {% for threat in threats %}
+        <tr>
+            <td>{{ threat.ioc }}</td>
+            <td>{{ threat.timestamp.strftime('%Y-%m-%d %H:%M:%S') if threat.timestamp else '' }}</td>
+            <td>{{ threat.tag or '' }}</td>
+            <td>
+                <form action="{{ url_for('tag') }}" method="post" style="display:inline;">
+                    <input type="hidden" name="ioc" value="{{ threat.ioc }}">
+                    <input type="text" name="tag" value="{{ threat.tag or '' }}" placeholder="Tag">
+                    <button type="submit">Update Tag</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <!-- Back to Top button -->
+    <button id="back-to-top" title="Back to top">↑ Top</button>
+    <script>
+    // Show the button when scrolling down
+    window.onscroll = function() {
+        const btn = document.getElementById("back-to-top");
+        if (window.scrollY > 100) btn.style.display = "block";
+        else btn.style.display = "none";
+    };
+    // Smooth scroll to top on click
+    document.getElementById("back-to-top").onclick = function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    </script>
+</body>
+</html>

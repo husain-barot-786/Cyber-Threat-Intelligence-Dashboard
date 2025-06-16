@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>Threat Lookup Metrics</h1>
+<div id="bar-chart" style="min-height: 420px;"></div>
+<noscript><p style="color: #d00; font-weight: bold;">JavaScript is required to view the metrics chart.</p></noscript>
+<script>
+    var graphJSON = {{ graphJSON|safe }};
+    if (graphJSON && graphJSON.data && graphJSON.data.length) {
+      Plotly.newPlot('bar-chart', graphJSON.data, graphJSON.layout, {responsive: true});
+    } else {
+      document.getElementById('bar-chart').innerHTML = '<div class="nodata-text" style="margin-top:24px; color: #888; font-style: italic;">No metrics data available.</div>';
+    }
+</script>
+{% endblock %}

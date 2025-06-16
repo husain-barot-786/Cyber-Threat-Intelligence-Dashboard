@@ -1,0 +1,16 @@
+| Type of Error                          | Input                              | Expected Error Message in VirusTotal                       | Expected Error Message in AbuseIPDB                         |
+|----------------------------------------|------------------------------------|------------------------------------------------------------|-------------------------------------------------------------|
+| Empty input                            | (blank)                            | Please provide a valid IP or domain.                       | Please provide a valid IP or domain.                        |
+| Invalid format (not IP/domain)         | not_an_ioc                         | Input must be a valid IPv4 address or a valid domain.      | Input must be a valid IPv4 address or a valid domain.       |
+| Malformed IP address                   | 1.2.3.400                          | No data found for this IP/domain in VirusTotal.            | The IP address entered is not valid.                        |
+| Reserved/private/bogon IP              | 192.168.1.1                        | No data found for this IP/domain in VirusTotal. (Possible) | The IP address provided is not a public routable address.   |
+|                                        | 127.0.0.1                          | No data found for this IP/domain in VirusTotal. (Possible) | The IP address provided is not a public routable address.   |
+|                                        | 10.0.0.1                           | No data found for this IP/domain in VirusTotal. (Possible) | The IP address provided is not a public routable address.   |
+| Valid domain (to test AbuseIPDB domain)| example.com                        | (Result or "No data found ..." in VirusTotal.)             | AbuseIPDB only supports IP address lookups.                 |
+| Nonexistent (but valid) domain         | thisdomaindoesnotexist123456789.com| No data found for this IP/domain in VirusTotal.            | AbuseIPDB only supports IP address lookups.                 |
+| Nonexistent (but valid) IP             | 203.0.113.123                      | No data found for this IP/domain in VirusTotal. (Possible) | No data found for this IP in AbuseIPDB.                     |
+| Valid, public IP (should work)         | 8.8.8.8                            | (Result, not error)                                        | (Result, not error)                                         |
+| API key error                          | 8.8.8.8 (with key unset/invalid)   | VirusTotal API key is missing or invalid.                  | AbuseIPDB API key is missing or invalid.                    |
+| Rate limit                             | 8.8.8.8 (simulate 429)             | VirusTotal API rate limit exceeded. Please try again later.| AbuseIPDB API rate limit exceeded. Please try again later.  |
+| Network error                          | 8.8.8.8 (disconnect internet)      | Network error while contacting VirusTotal.                 | Network error while contacting AbuseIPDB.                   |
+| Unexpected error                       | 8.8.8.8 (raise Exception)          | Unexpected error from VirusTotal: {error message}          | Unexpected error from AbuseIPDB: {error message}            |
